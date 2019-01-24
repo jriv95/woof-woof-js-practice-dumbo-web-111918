@@ -1,55 +1,76 @@
+document.addEventListener("DOMContentLoaded", e => {
+    const dogBar = document.getElementById("dog-bar")
+    const dogInfo = document.getElementById("dog-info")
+    const button = document.getElementsByClassName("button")
 
-document.addEventListener('DOMContentLoaded', e = () => {
-  const dogBar = document.querySelector('#dog-bar')
-    fetch('http://localhost:3000/pups')
-    .then(res => res.json())
-    .then(pups => showDogs(pups))
+    fetch("http://localhost:3000/pups")
+    .then(r => r.json())
+    .then(pups => pups.forEach(pup => {
+        showPup(pup)
+    }))
 
-dogInfo = document.querySelector('#dog-info')
-
-    const showDogs = (dogs) => {
-      dogs.forEach(dog => {
-        dogBar.innerHTML += `<span data-id="${dog.id}"> ${dog.name} </span>`
-      })
+    const showPup = (pup) => {
+        dogBar.innerHTML += `<span data-id="${pup.id}">${pup.name}</span>`
     }
 
-    dogBar.addEventListener('click', e => {
-      if(e.target) {
-        const dataId = e.target.getAttribute('data-id')
 
-        fetch(`http://localhost:3000/pups/${dataId}`)
-        .then(res => res.json())
-        .then(dogData => showDog(dogData))
-      }
+    dogBar.addEventListener("click", e => {
+        if (e.target.dataset.id) {
+            
+            const dataId = e.target.dataset.id
+            const id = parseInt(dataId)
+            fetch(`http://localhost:3000/pups/${id}`)
+            .then(r => r.json())
+            .then(dog => {
+                showDog(dog)
+            })
+        }
+            
     })
 
     const showDog = (dog) => {
-        dogInfo.innerHTML = `<div data-id ="${dog.id}"><img src=${dog.image}>
-        <h2>${dog.name}</h2>
-        <button id="button"> ${dog.isGoodDog ? "Make bad dog" : "Make good dog"} </button>
-        </div>`
+        if (dog.isGoodDog) {
+            dogInfo.innerHTML = ""
+            dogInfo.innerHTML += 
+            `<img src=${dog.image}>
+            <h2>${dog.name}</h2>
+            <button class="button" data-id="${dog.id}">Bad Dog</button>`
+        } else if (!dog.isGoodDog) {
+            dogInfo.innerHTML = ""
+            dogInfo.innerHTML += 
+            `<img src=${dog.image}>
+            <h2>${dog.name}</h2>
+            <button class="button" data-id="${dog.id}">Good Dog</button>`
+        }
     }
 
-    dogInfo.addEventListener('click', e => {
-      if(e.target.id === 'button') {
-        const buttonId = e.target.parentNode.querySelector('#button')
-        const buttonValue = buttonId.innerHTML
-        const dataId = e.target.parentNode.getAttribute('data-id')
-        const changeDog = e.target.innerText === "Make good dog"
+    dogInfo.addEventListener("click", e => {
+        if (e.target.classList.contains("button")) {
+            const buttonNode = e.target.classList.contains("button")
+            const dataId = e.target.dataset.id
+            const id = parseInt(dataId)
+            const goodDog = e.target.innerText === "Bad Dog"
+            
+            fetch(`http://localhost:3000/pups/${id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    isGoodDog: !goodDog 
+                })
+            })
+            .then(r => r.json())
+            .then(dog => {
+                button.innerText = showDog(dog)
+            })
 
-          fetch(`http://localhost:3000/pups/${dataId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({
-              isGoodDog: changeDog
-            }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-          .then(res => res.json())
-          .then(data => showDog(data))
-      }
-
+        }
     })
 
-})
+
+
+    
+
+
+}) // DOMContentLoaded
